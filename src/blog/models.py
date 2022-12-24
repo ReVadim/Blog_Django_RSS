@@ -4,7 +4,7 @@ from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.models import User
 
 
-class PublishedManager(models.Model):
+class PublishedManager(models.Manager):
     """ Custom model manager
     """
     def get_queryset(self):
