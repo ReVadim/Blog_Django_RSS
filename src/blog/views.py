@@ -1,27 +1,9 @@
 from django.shortcuts import render, get_object_or_404
-from .models import Post
-from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from .models import Post, Comment
 from django.views.generic import ListView
-from .forms import EmailPostForm
+from .forms import EmailPostForm, CommentForm
 from django.core.mail import send_mail
-
-
-"""
-def post_list(request):
-    ''' display all posts
-    '''
-    all_posts = Post.published.all()
-    paginator = Paginator(all_posts, 3)
-    page_number = request.GET.get('page')
-    try:
-        posts = paginator.page(page_number) 
-    except PageNotAnInteger:
-        posts = paginator.page(1)
-    except EmptyPage:
-        posts = paginator.page(paginator.num_pages)
-
-    return render(request, 'blog/post/list.html', {'posts': posts})
-"""
+from django.views.decorators.http import require_POST
 
 
 class PostListView(ListView):
@@ -36,7 +18,6 @@ class PostListView(ListView):
 def post_detail(request, year, month, day, post):
     """ Detail information about post
     """
-    # post = get_object_or_404(Post, id=post_id, status=Post.Status.PUBLISHED)
     post = get_object_or_404(Post,
                              status=Post.Status.PUBLISHED,
                              slug=post,
@@ -44,8 +25,15 @@ def post_detail(request, year, month, day, post):
                              publish__month=month,
                              publish__day=day
                              )
+    comments = post.comments.filter(active=True)
+    form = CommentForm()
+    context = {
+        'post': post,
+        'comments': comments,
+        'form': form
+    }
 
-    return render(request, 'blog/post/detail.html', {'post': post})
+    return render(request, 'blog/post/detail.html', context=context)
 
 
 def post_share(request, post_id):
@@ -68,3 +56,29 @@ def post_share(request, post_id):
         form = EmailPostForm()
 
     return render(request, 'blog/post/share.html', {'post': post, 'form': form, 'sent': sent})
+
+
+# for POST method only
+@require_POST
+def post_comment(request, post_id):
+    """ add comment to post and render than
+    """
+    post = get_object_or_404(Post, id=post_id, status=Post.Status.PUBLISHED)
+    comment = None
+    # a comment was posted
+    form = CommentForm(data=request.POST)
+    if form.is_valid():
+        # create comment object without saving it in the database
+        comment = form.save(commit=False)
+        # assign the post to the comment
+        comment.post = post
+        # save to the database
+        comment.save()
+
+    context = {
+        'post': post,
+        'form': form,
+        'comment': comment
+    }
+
+    return render(request, 'blog/post/comment.html', context=context)
