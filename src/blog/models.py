@@ -46,3 +46,24 @@ class Post(models.Model):
                                                      self.publish.month,
                                                      self.publish.day,
                                                      self.slug])
+
+
+class Comment(models.Model):
+    """ Model for store users comments in post
+    """
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name=_('comments'))
+    name = models.CharField(max_length=80, verbose_name=_('name'))
+    email = models.EmailField()
+    body = models.CharField(max_length=1000)
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
+    active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ['created']
+        indexes = [
+            models.Index(fields=['created']),
+        ]
+
+    def __str__(self):
+        return f'Comment by {self.name} on {self.post}'
