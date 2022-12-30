@@ -3,6 +3,7 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.models import User
 from django.urls import reverse
+from taggit.managers import TaggableManager
 
 
 class PublishedManager(models.Manager):
@@ -31,6 +32,7 @@ class Post(models.Model):
     status = models.CharField(max_length=2, verbose_name=_('status'), choices=Status.choices, default=Status.DRAFT)
     objects = models.Manager()
     published = PublishedManager()
+    tags = TaggableManager()
 
     class Meta:
         ordering = ['-publish']
